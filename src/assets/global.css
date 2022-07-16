@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+:root {
+  --main-bg-color: #1d1b29;
+  --secondary-bg-color: #252234;
+  --primary-color: #32d7db;
+  --primary-color-light: #37e9ec;
+  --primary-text-color: #eeeded;
+  --secondary-text-color: #dcdcdc;
+}
+
+.material-symbols-outlined {
+  user-select: none;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
+}
+
+input:not(input[type="checkbox"]),
+button {
+  border: unset;
+  outline: unset;
+}
+
+input,
+optgroup,
+select,
+textarea,
+html input[type="button"],
+input[type="reset"],
+input[type="submit"],
+button[disabled],
+button::-moz-focus-inner,
+input::-moz-focus-inner,
+input[type="checkbox"],
+input[type="radio"],
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input[type="search"],
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  border: none;
+  margin: 0;
+  padding: 0;
+  background-image: none;
+  background-color: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  border-style: none;
+}
+
+input:focus:focus-visible {
+  outline: none;
+}
+
+body {
+  background-color: var(--main-bg-color);
+  color: var(--primary-text-color);
+  font-family: "Roboto", sans-serif;
+  display: block;
+  height: 100%;
+  line-height: 1.2;
+  font-weight: 500;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}

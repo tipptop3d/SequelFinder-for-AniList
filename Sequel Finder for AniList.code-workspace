@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"[vue][typescript]": {
+			"editor.formatOnSave": true
+		},
+		"editor.codeActionsOnSave": {
+			"source.fixAll": true,
+		},
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
+}

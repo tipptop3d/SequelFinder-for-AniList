@@ -1,76 +1,70 @@
-<script setup lang="ts">
-// vue
-import { inject, ref } from 'vue'
-
-// components
-import MediaEntry from './components/MediaEntry.vue'
-import ResultsList from './components/ResultsList.vue'
-import SearchBar from './components/SearchBar.vue'
-import NavBar from './components/NavBar.vue'
-
-// modules
-import type { GraphQLClient } from 'graphql-request'
-
-// other
-import type {
-	AllLists,
-	Media,
-	MediaPage,
-	RelationsOfCompleted,
-} from './helpers/interfaces'
-import { getNotPlannedSequels } from './helpers/anime'
-import { allAnimeQuery, mediaWithId } from './queries/anilist'
-
-const sequelsNotPlanned = ref<Media[]>([])
-const gqlClient = inject<GraphQLClient>('gqlClient') as GraphQLClient
-
-async function fetchData(userName: string) {
-	const data = await gqlClient.request(allAnimeQuery, { name: userName })
-	const allLists: AllLists[] = data.allAnime.lists
-	const relationsOfCompleted: RelationsOfCompleted[] =
-		data.relationsOfCompleted.lists[0].entries
-
-	return { allLists, relationsOfCompleted }
-}
-
-async function handleSubmit(userName: string) {
-	sequelsNotPlanned.value = []
-	const { allLists, relationsOfCompleted } = await fetchData(userName)
-	const ids = getNotPlannedSequels(allLists, relationsOfCompleted)
-
-	let hasNextPage
-	let page = 1
-	do {
-		const data: MediaPage = (
-			await gqlClient.request(mediaWithId, { ids: ids, page: page++ })
-		).Page
-		hasNextPage = data.pageInfo.hasNextPage
-		sequelsNotPlanned.value = sequelsNotPlanned.value.concat(data.media)
-	} while (hasNextPage)
-}
-</script>
-
 <template>
 	<div>
 		<NavBar />
 		<div class="page-content">
-			<SearchBar @submitted="handleSubmit" />
-			<ResultsList>
+			<SearchBar
+				@loading="
+					(status) => {
+						isLoading = status
+					}
+				"
+				@update="
+					(content) => {
+						mediaList = content
+					}
+				"
+			/>
+			<ResultsList v-if="mediaList.length > 1">
 				<TransitionGroup name="list">
 					<MediaEntry
-						v-for="media in sequelsNotPlanned"
+						v-for="media in mediaList"
 						:key="media.id"
 						:media="media"
 					/>
 				</TransitionGroup>
 			</ResultsList>
+			<div v-else-if="isLoading" class="spinner"></div>
 		</div>
 	</div>
 </template>
 
+<script setup lang="ts">
+// vue
+import { ref } from 'vue'
+// components
+import MediaEntry from './components/MediaEntry.vue'
+import ResultsList from './components/ResultsList.vue'
+import SearchBar from './components/SearchBar.vue'
+import NavBar from './components/NavBar.vue'
+// types
+import type { Media } from './types/types'
+
+const isLoading = ref<boolean>(false)
+const mediaList = ref<Media[]>([])
+</script>
+
 <style>
+.spinner {
+	margin: 36px auto;
+	border: 16px solid var(--secondary-bg-color); /* Light grey */
+	border-top: 16px solid var(--primary-color); /* Blue */
+	border-radius: 50%;
+	width: 120px;
+	height: 120px;
+	animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
 .list-enter-active {
-	transition: 0.3s all 0.05s ease-in-out;
+	transition: all 0.3s ease-in-out 0.05s;
 }
 
 .list-leave-active {

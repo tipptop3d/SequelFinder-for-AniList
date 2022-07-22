@@ -1,19 +1,33 @@
 <template>
-	<div class="checkbox-select">
-		<div class="select-placeholder" @click="switchDisplay">
+	<div
+		class="checkbox-select"
+		@click="switchDisplay"
+		@keyup.enter="switchDisplay"
+		@focusout="handleFocusOut"
+		tabindex="0"
+	>
+		<div class="select-placeholder">
 			<slot name="select">
-				{{ modelValue }}
+				<div class="select">
+					<span class="placeholder-text">Formats</span>
+					<span
+						class="expand-icon material-symbols-outlined"
+						:class="{ rotated: expanded }"
+					>
+						expand_more
+					</span>
+				</div>
 			</slot>
 		</div>
 		<Transition>
-			<div class="options" v-if="unfolded">
+			<div class="options" v-if="expanded">
 				<slot name="options" :value="modelValue">
 					<SelectOption
-						v-for="option in options"
-						:key="option"
-						:id="option"
-						v-model="value"
-						class="option"
+						v-for="[id, value] in Object.entries(options!)"
+						:key="id"
+						:id="id"
+						:name="value"
+						v-model="model"
 					>
 					</SelectOption>
 				</slot>
@@ -28,14 +42,14 @@ import SelectOption from './MultiSelectOption.vue'
 
 const props = defineProps<{
 	modelValue: Set<string>
-	options?: string[]
+	options?: { [id: string]: string }
 }>()
 
 const emit = defineEmits<{
 	(event: 'update:modelValue', checked: Set<string>): void
 }>()
 
-const value = computed<Set<string>>({
+const model = computed<Set<string>>({
 	get() {
 		return props.modelValue
 	},
@@ -44,11 +58,9 @@ const value = computed<Set<string>>({
 	},
 })
 
-const unfolded = ref<boolean>(false)
+const expanded = ref<boolean>(false)
 
 const app = getCurrentInstance()
-console.log('Slots:', app?.slots.options)
-console.log('Props:', props.options)
 
 const slotProvided = app?.slots.options != null
 const vModelProvided = props.modelValue != null
@@ -64,7 +76,19 @@ if (
 }
 
 function switchDisplay() {
-	unfolded.value = !unfolded.value
+	expanded.value = !expanded.value
+}
+
+function handleFocusOut(event: FocusEvent) {
+	// collapse if the dropdown menu loses focus
+	const relatedTarget = event.relatedTarget as Element
+	if (relatedTarget == event.currentTarget) {
+		return
+	}
+	if (relatedTarget?.className == 'option') {
+		return
+	}
+	expanded.value = false
 }
 </script>
 
@@ -75,7 +99,23 @@ function switchDisplay() {
 .select-placeholder {
 	height: 100%;
 }
-
+.select {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 100%;
+}
+.placeholder-text {
+	color: var(--secondary-text-color);
+	padding-left: 10px;
+}
+.expand-icon {
+	padding: 4px;
+	transition: transform 0.5s;
+}
+.rotated {
+	transform: rotateX(180deg);
+}
 .options {
 	position: absolute;
 	z-index: 1;
@@ -84,9 +124,6 @@ function switchDisplay() {
 	border-radius: 12px;
 	width: inherit;
 	padding: 8px;
-}
-.option {
-	padding: 8px 10px;
 }
 .v-enter-active,
 .v-leave-active {

@@ -46,6 +46,7 @@ export const mediaWithId = gql`
 			}
 			media(id_in: $ids) {
 				id
+				format
 				title {
 					romaji
 				}

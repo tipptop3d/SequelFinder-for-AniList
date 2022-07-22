@@ -1,7 +1,7 @@
-import type { AllLists, RelationsOfCompleted } from './interfaces'
+import type { MediaList, RelationsOfCompleted } from '../types/types'
 
 export function getNotPlannedSequels(
-	allLists: AllLists[],
+	allLists: MediaList[],
 	relationsOfCompleted: RelationsOfCompleted[]
 ) {
 	const sequelsNotPlanned: number[] = []

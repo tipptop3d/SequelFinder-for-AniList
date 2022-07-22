@@ -7,7 +7,7 @@
 				type="text"
 				placeholder="Your Username"
 			/>
-			<button class="submit-button" @click="onSubmit">
+			<button class="submit-button" @click="handleSubmit">
 				<span class="submit-text">Search</span>
 				<span class="submit-icon material-symbols-outlined">search</span>
 			</button>
@@ -15,47 +15,92 @@
 		<MultiSelectDropdown
 			class="multi-select"
 			v-model="checkedFormats"
-			:options="mediaFormats"
-		>
-			<template #select>
-				<div class="select">
-					<span class="placeholder-text">Formats</span>
-					<span class="expand-icon material-symbols-outlined">expand_more</span>
-				</div>
-			</template>
-		</MultiSelectDropdown>
+			:options="MediaFormats"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
 // vue
-import { ref } from 'vue'
+import { watch, ref, inject, reactive } from 'vue'
+import type {
+	MediaList,
+	Media,
+	MediaPage,
+	RelationsOfCompleted,
+} from '../types/types'
+
+import { getNotPlannedSequels } from '../helpers/anime'
+import { MediaFormats } from '@/enums'
+import type { GraphQLClient } from 'graphql-request'
+import { allAnimeQuery, mediaWithId } from '../queries/anilist'
+
 import MultiSelectDropdown from './MultiSelect/MultiSelectDropdown.vue'
 
+const gqlClient = inject<GraphQLClient>('gqlClient') as GraphQLClient
+
+// console.log(Array.from(mediaFormats.entries()))
+console.log(Object.create(MediaFormats))
 const emit = defineEmits<{
-	(event: 'submitted', name: string): void
-	(event: 'error', reason: string): void
+	(event: 'loading', status: boolean): void
+	(event: 'update', content: Media[]): void
 }>()
 
 const userName = ref<string>('')
-const mediaFormats = [
-	'TV',
-	'TV_SHORT',
-	'MOVIE',
-	'SPECIAL',
-	'OVA',
-	'ONA',
-	'MUSIC',
-]
-const checkedFormats = ref<Set<string>>(new Set(['TV']))
-console.log(checkedFormats.value)
 
-function onSubmit() {
-	if (userName.value.length < 2) {
-		return emit('error', 'Please enter a name with at least 2 characters')
+const checkedFormats = reactive<Set<string>>(new Set(['TV']))
+
+async function fetchData(userName: string) {
+	let data
+	try {
+		data = await gqlClient.request(allAnimeQuery, { name: userName })
+	} catch (e) {
+		if (e instanceof Error) {
+			alert('Error: ' + e.message)
+		}
 	}
-	emit('submitted', userName.value)
+	const allLists: MediaList[] = data.allAnime.lists
+	const relationsOfCompleted: RelationsOfCompleted[] =
+		data.relationsOfCompleted.lists[0].entries
+
+	return { allLists, relationsOfCompleted }
 }
+
+const sequelsNotPlanned = ref<Media[]>([])
+
+async function handleSubmit() {
+	if (userName.value.length < 2) {
+		return alert('Username has to be aleast 2 Characters long')
+	}
+	emit('loading', true)
+	sequelsNotPlanned.value = []
+	emit('update', [])
+	const { allLists, relationsOfCompleted } = await fetchData(userName.value)
+	const ids = getNotPlannedSequels(allLists, relationsOfCompleted)
+
+	let hasNextPage = true
+	let page = 1
+	while (hasNextPage) {
+		const data: MediaPage = (
+			await gqlClient.request(mediaWithId, { ids: ids, page: page++ })
+		).Page
+		hasNextPage = data.pageInfo.hasNextPage
+		sequelsNotPlanned.value.push(...data.media)
+	}
+	emit('update', sequelsNotPlanned.value.filter(predicate))
+	emit('loading', false)
+}
+
+function predicate(m: Media) {
+	if (!checkedFormats.has(m.format)) {
+		return false
+	}
+	return true
+}
+
+watch(checkedFormats, () => {
+	emit('update', sequelsNotPlanned.value.filter(predicate))
+})
 </script>
 
 <style scoped>
@@ -121,19 +166,5 @@ function onSubmit() {
 	width: 180px;
 	background-color: var(--secondary-bg-color);
 	border-radius: 12px;
-}
-.select {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	height: 100%;
-}
-.placeholder-text {
-	color: var(--secondary-text-color);
-	padding-left: 10px;
-}
-.expand-icon {
-	padding: 4px;
-	float: inline-end;
 }
 </style>

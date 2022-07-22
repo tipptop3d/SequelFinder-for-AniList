@@ -1,14 +1,16 @@
 <template>
-	<a>
+	<a :href="media.siteUrl" target="_blank" rel="noreferrer noopener">
 		<div class="cover">
 			<div class="image" :style="bgImageStyle" />
-			<div class="title">{{ media.title.romaji }}</div>
+			<div class="on-image title">{{ media.title.romaji }}</div>
+			<div class="on-image format">{{ MediaFormats[media.format] }}</div>
 		</div>
 	</a>
 </template>
 
 <script setup lang="ts">
-import type { Media } from '@/helpers/interfaces'
+import type { Media } from '@/types/types'
+import { MediaFormats } from '@/enums'
 
 const props = defineProps<{ media: Media }>()
 const bgImageStyle = {
@@ -39,7 +41,15 @@ const bgImageStyle = {
 	width: 100%;
 	height: 100%;
 }
-
+.on-image {
+	display: block;
+	text-align: center;
+	position: absolute;
+	background-color: rgba(28, 18, 42, 0.72);
+	border-radius: 0 0 4px 4px;
+	color: rgb(253, 247, 255);
+	font-size: 1.05rem;
+}
 .title {
 	width: 100%;
 	display: block;

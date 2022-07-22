@@ -1,8 +1,10 @@
-export interface AllLists {
+import type { MediaFormats } from '@/enums'
+
+export type MediaList = {
 	entries: [{ media: { id: number } }]
 }
 
-export interface RelationsOfCompleted {
+export type RelationsOfCompleted = {
 	media: {
 		relations: {
 			edges: [{ relationType: string; node: { id: number } }]
@@ -10,15 +12,16 @@ export interface RelationsOfCompleted {
 	}
 }
 
-export interface MediaPage {
+export type MediaPage = {
 	pageInfo: {
 		hasNextPage: boolean
 	}
-	media: [Media]
+	media: Media[]
 }
 
-export interface Media {
+export type Media = {
 	id: number
+	format: MediaFormat
 	title: {
 		romaji: string
 	}
@@ -27,3 +30,5 @@ export interface Media {
 	}
 	siteUrl: string
 }
+
+export type MediaFormat = keyof typeof MediaFormats

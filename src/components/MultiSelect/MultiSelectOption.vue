@@ -1,6 +1,11 @@
 <template>
-	<div class="option" @click="update">
-		<div class="label">{{ id }}</div>
+	<div
+		class="option"
+		tabindex="0"
+		@click.stop="update"
+		@keyup.stop.enter="update"
+	>
+		<div class="label">{{ name }}</div>
 		<div class="selected" v-if="checked">
 			<svg xmlns="http://www.w3.org/2000/svg" class="check-circle">
 				<path
@@ -16,6 +21,7 @@ import { ref } from 'vue'
 
 const props = defineProps<{
 	modelValue: Set<string>
+	name: string
 	id: string
 }>()
 
@@ -41,6 +47,7 @@ function update() {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	padding: 8px 10px;
 	border-radius: 4px;
 	cursor: pointer;
 	transition: background-color 0.2s;

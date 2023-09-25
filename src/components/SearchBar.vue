@@ -1,22 +1,13 @@
 <template>
 	<div class="input">
 		<div class="query">
-			<input
-				v-model="userName"
-				class="query-text"
-				type="text"
-				placeholder="Your Username"
-			/>
+			<input v-model="userName" class="query-text" type="text" placeholder="Your Username" />
 			<button class="submit-button" @click="handleSubmit">
 				<span class="submit-text">Search</span>
 				<span class="submit-icon material-symbols-outlined">search</span>
 			</button>
 		</div>
-		<MultiSelectDropdown
-			class="multi-select"
-			v-model="checkedFormats"
-			:options="MediaFormats"
-		/>
+		<MultiSelectDropdown class="multi-select" v-model="checkedFormats" :options="MediaFormats" />
 	</div>
 </template>
 
@@ -113,6 +104,7 @@ watch(checkedFormats, () => {
 	margin: 12px auto;
 	flex-wrap: wrap;
 }
+
 .query {
 	display: inline-flex;
 	height: 100%;
@@ -142,16 +134,20 @@ watch(checkedFormats, () => {
 	cursor: pointer;
 	transition: all 0.2s;
 }
+
 .submit-text {
 	display: block;
 }
+
 .submit-icon {
 	display: none;
 }
+
 @media screen and (max-width: 480px) {
 	.submit-text {
 		display: none;
 	}
+
 	.submit-icon {
 		display: block;
 	}

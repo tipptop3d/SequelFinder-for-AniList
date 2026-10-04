@@ -1,7 +1,6 @@
 <template>
 	<header class="header">
 		<img class="logo" src="/src/assets/logo-transparent-64x.png" />
-		<h1>Sequel Finder for AniList</h1>
 	</header>
 </template>
 
@@ -19,10 +18,5 @@
 
 .logo {
 	margin: 0 12px;
-}
-
-h1 {
-	margin: 0 12px;
-	font-weight: 700;
 }
 </style>

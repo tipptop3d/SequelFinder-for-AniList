@@ -1,21 +1,36 @@
 <template>
-	<a :href="media.siteUrl" target="_blank" rel="noreferrer noopener">
+	<a :href="media.siteUrl || undefined" target="_blank" rel="noreferrer noopener">
 		<div class="cover">
 			<div class="image" :style="bgImageStyle" />
-			<div class="on-image title">{{ media.title.romaji }}</div>
-			<div class="on-image format">{{ MediaFormats[media.format] }}</div>
+			<div class="title">
+				{{ media.title?.english ?? media.title?.romaji ?? media.title?.native ?? 'No title' }}
+			</div>
+			<div class="format">{{ media.format }}</div>
 		</div>
 	</a>
 </template>
 
 <script setup lang="ts">
-import type { Media } from '@/types/types'
-import { MediaFormats } from '@/enums'
+import type { MediaFormat } from '@/gql/graphql'
+import { computed } from 'vue'
 
-const props = defineProps<{ media: Media }>()
-const bgImageStyle = {
-	backgroundImage: `url(${props.media.coverImage.extraLarge})`,
-}
+const props = defineProps<{
+	media: {
+		siteUrl: string | null
+		coverImage: { extraLarge: string | null } | null
+		format: MediaFormat | null
+		title: {
+			romaji: string | null
+			english: string | null
+			native: string | null
+		} | null
+	}
+}>()
+const bgImageStyle = computed(() => ({
+	backgroundImage: props.media.coverImage?.extraLarge
+		? `url(${props.media.coverImage.extraLarge})`
+		: undefined,
+}))
 </script>
 
 <style scoped>
@@ -23,44 +38,30 @@ const bgImageStyle = {
 	display: inline-block;
 	position: relative;
 	width: 100%;
-	height: 100%;
-	box-shadow: 0px 0px 16px 0px rgba(0, 0, 0, 0.4);
-	transition: transform 0.2s;
 	border-radius: 4px;
-}
-
-.cover:hover {
-	box-shadow: 0px 0px 16px 0px rgba(0, 0, 0, 0.6);
-	transform: scale(1.05);
 }
 
 .image {
+	background-color: #4b4b4b;
 	background-position: 50%;
 	background-size: cover;
+	object-fit: cover;
 	border-radius: 4px;
 	width: 100%;
-	height: 100%;
+	height: 265px;
 }
-.on-image {
-	display: block;
-	text-align: center;
-	position: absolute;
-	background-color: rgba(28, 18, 42, 0.72);
-	border-radius: 0 0 4px 4px;
-	color: rgb(253, 247, 255);
-	font-size: 1.05rem;
-}
+
 .title {
 	width: 100%;
 	display: block;
-	text-align: center;
-	position: absolute;
-	background-color: rgba(28, 18, 42, 0.72);
+	text-align: left;
 	border-radius: 0 0 4px 4px;
-	color: rgb(253, 247, 255);
-	bottom: 0;
-	left: 0;
+	color: var(--primary-text-color);
 	padding: 12px 6px 12px;
-	font-size: 1.05rem;
+	font-size: 1rem;
+}
+
+.format {
+	color: var(--primary-text-color);
 }
 </style>

@@ -1,25 +1,30 @@
-import type { MediaList, RelationsOfCompleted } from '../types/types'
+import type { GetAllAnimeQuery } from '../gql/graphql'
 
-export function getNotPlannedSequels(
-	allLists: MediaList[],
-	relationsOfCompleted: RelationsOfCompleted[]
+export function getSequelIdsNotPlanned(
+	allLists: GetAllAnimeQuery['allAnime'],
+	relationsOfCompleted: GetAllAnimeQuery['relationsOfCompleted'],
 ) {
-	const sequelsNotPlanned: number[] = []
+	const sequelIdsNotPlanned: number[] = []
 	const allAnime = new Set<number>()
 
-	for (const list of allLists) {
-		for (const entry of list.entries) {
-			allAnime.add(entry.media.id)
-		}
-	}
-
-	for (const entry of relationsOfCompleted) {
-		const edges = entry.media.relations.edges
-		for (const edge of edges) {
-			if (edge.relationType === 'SEQUEL' && !allAnime.has(edge.node.id)) {
-				sequelsNotPlanned.push(edge.node.id)
+	// build a flat set of all animes the user has in his anime collection
+	for (const list of allLists?.lists ?? []) {
+		for (const entry of list?.entries ?? []) {
+			if (entry?.media) {
+				allAnime.add(entry.media.id)
 			}
 		}
 	}
-	return sequelsNotPlanned
+
+	// iterates over every sequel
+	for (const list of relationsOfCompleted?.lists ?? []) {
+		for (const entry of list?.entries ?? []) {
+			for (const edge of entry?.media?.relations?.edges ?? []) {
+				if (edge?.relationType === 'SEQUEL' && edge.node && !allAnime.has(edge.node.id)) {
+					sequelIdsNotPlanned.push(edge.node.id)
+				}
+			}
+		}
+	}
+	return sequelIdsNotPlanned
 }

@@ -1,35 +1,31 @@
 <template>
 	<div
 		class="checkbox-select"
+		tabindex="0"
 		@click="switchDisplay"
 		@keyup.enter="switchDisplay"
 		@focusout="handleFocusOut"
-		tabindex="0"
 	>
 		<div class="select-placeholder">
 			<slot name="select">
 				<div class="select">
 					<span class="placeholder-text">Formats</span>
-					<span
-						class="expand-icon material-symbols-outlined"
-						:class="{ rotated: expanded }"
-					>
+					<span class="expand-icon material-symbols-outlined" :class="{ rotated: expanded }">
 						expand_more
 					</span>
 				</div>
 			</slot>
 		</div>
 		<Transition>
-			<div class="options" v-if="expanded">
+			<div v-if="expanded" class="options">
 				<slot name="options" :value="modelValue">
 					<SelectOption
 						v-for="[id, value] in Object.entries(options!)"
-						:key="id"
 						:id="id"
-						:name="value"
+						:key="id"
 						v-model="model"
-					>
-					</SelectOption>
+						:name="value"
+					/>
 				</slot>
 			</div>
 		</Transition>
@@ -70,9 +66,7 @@ if (
 	!(!slotProvided && vModelProvided && optionsProvided) &&
 	!(slotProvided && !vModelProvided && !optionsProvided)
 ) {
-	throw new TypeError(
-		'Either provide options slot or v-model and options prop.'
-	)
+	throw new TypeError('Either provide options slot or v-model and options prop.')
 }
 
 function switchDisplay() {
@@ -127,7 +121,10 @@ function handleFocusOut(event: FocusEvent) {
 }
 .v-enter-active,
 .v-leave-active {
-	transition: transform, opacity 0.3s, 0.3s;
+	transition:
+		transform,
+		opacity 0.3s,
+		0.3s;
 }
 .v-enter-from,
 .v-leave-to {

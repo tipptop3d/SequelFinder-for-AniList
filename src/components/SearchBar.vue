@@ -7,91 +7,82 @@
 				<span class="submit-icon material-symbols-outlined">search</span>
 			</button>
 		</div>
-		<MultiSelectDropdown class="multi-select" v-model="checkedFormats" :options="MediaFormats" />
+		<MultiSelectDropdown v-model="checkedFormats" class="multi-select" :options="MediaFormats" />
 	</div>
 </template>
 
 <script setup lang="ts">
-// vue
-import { watch, ref, inject, reactive } from 'vue'
-import type {
-	MediaList,
-	Media,
-	MediaPage,
-	RelationsOfCompleted,
-} from '../types/types'
+import { ref, computed } from 'vue'
 
-import { getNotPlannedSequels } from '../helpers/anime'
 import { MediaFormats } from '@/enums'
-import type { GraphQLClient } from 'graphql-request'
-import { allAnimeQuery, mediaWithId } from '../queries/anilist'
+import { useQuery } from '@urql/vue'
+import { graphql } from '../gql'
 
 import MultiSelectDropdown from './MultiSelect/MultiSelectDropdown.vue'
+import { getSequelIdsNotPlanned } from '@/helpers/anime.ts'
 
-const gqlClient = inject<GraphQLClient>('gqlClient') as GraphQLClient
-
-// console.log(Array.from(mediaFormats.entries()))
-console.log(Object.create(MediaFormats))
 const emit = defineEmits<{
 	(event: 'loading', status: boolean): void
-	(event: 'update', content: Media[]): void
+	(event: 'update', content: number[]): void
 }>()
 
 const userName = ref<string>('')
+const checkedFormats = defineModel<Set<string>>({
+	default: () => new Set(['TV']),
+})
 
-const checkedFormats = reactive<Set<string>>(new Set(['TV']))
-
-async function fetchData(userName: string) {
-	let data
-	try {
-		data = await gqlClient.request(allAnimeQuery, { name: userName })
-	} catch (e) {
-		if (e instanceof Error) {
-			alert('Error: ' + e.message)
+const userData = useQuery({
+	query: graphql(`
+		query getAllAnime($name: String) {
+			allAnime: MediaListCollection(userName: $name, type: ANIME, sort: MEDIA_ID) {
+				lists {
+					entries {
+						media {
+							id
+						}
+					}
+				}
+			}
+			relationsOfCompleted: MediaListCollection(
+				userName: $name
+				type: ANIME
+				sort: MEDIA_ID
+				status: COMPLETED
+			) {
+				lists {
+					entries {
+						media {
+							relations {
+								edges {
+									relationType(version: 2)
+									node {
+										id
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
-	}
-	const allLists: MediaList[] = data.allAnime.lists
-	const relationsOfCompleted: RelationsOfCompleted[] =
-		data.relationsOfCompleted.lists[0].entries
-
-	return { allLists, relationsOfCompleted }
-}
-
-const sequelsNotPlanned = ref<Media[]>([])
+	`),
+	variables: computed(() => ({ name: userName.value })),
+	pause: true,
+})
 
 async function handleSubmit() {
 	if (userName.value.length < 2) {
 		return alert('Username has to be aleast 2 Characters long')
 	}
 	emit('loading', true)
-	sequelsNotPlanned.value = []
 	emit('update', [])
-	const { allLists, relationsOfCompleted } = await fetchData(userName.value)
-	const ids = getNotPlannedSequels(allLists, relationsOfCompleted)
-
-	let hasNextPage = true
-	let page = 1
-	while (hasNextPage) {
-		const data: MediaPage = (
-			await gqlClient.request(mediaWithId, { ids: ids, page: page++ })
-		).Page
-		hasNextPage = data.pageInfo.hasNextPage
-		sequelsNotPlanned.value.push(...data.media)
-	}
-	emit('update', sequelsNotPlanned.value.filter(predicate))
+	userData.resume()
+	await userData
+	const data = userData.data.value!
+	const sequelsNotPlanned = getSequelIdsNotPlanned(data.allAnime, data.relationsOfCompleted)
+	emit('update', sequelsNotPlanned)
 	emit('loading', false)
 }
-
-function predicate(m: Media) {
-	if (!checkedFormats.has(m.format)) {
-		return false
-	}
-	return true
-}
-
-watch(checkedFormats, () => {
-	emit('update', sequelsNotPlanned.value.filter(predicate))
-})
 </script>
 
 <style scoped>
@@ -126,7 +117,7 @@ watch(checkedFormats, () => {
 	font-size: 1.1rem;
 	text-align: center;
 	padding: 0 10px;
-	color: rgb(46, 46, 46);
+	color: var(--primary-text-color);
 	border-radius: 0 12px 12px 0;
 	width: auto;
 	height: 100%;
